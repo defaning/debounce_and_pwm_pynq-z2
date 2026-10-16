@@ -154,3 +154,30 @@ sw[1:0] │              breathe_top (FSM)               │─────►�
   XDC 段已在 master 里,注意极性反转;
 - 把消抖参数 `STABLE_CYC` 改成从 VIO 在线可调(2ms/5ms/10ms/20ms 四档),ILA 验证不同档位下的响应;
 - 用 `vio_speed` 覆盖与 BTN1 加减档做"仲裁"(VIO 优先 or 按键优先),用 ILA 抓仲裁切换瞬间。
+
+## 9. 发布与一键重建(S0 · vivado-revision-control)
+
+仓库只跟踪"源 + 脚本",Vivado 工程产物全部可复现:
+
+```
+rtl/  constr/  sim/        ← 设计源(唯一真源)
+vivado_proj/               ← 本地工程,git 忽略(可随时删除重建)
+└── RevisionControl/       ← ★ 例外:随仓库发布
+    ├── Sources/IP/        ← ila_0 / vio_0 的 write_ip_tcl 脚本(IP 配置的权威记录)
+    └── Scripts/           ← build.tcl / project_settings.tcl / verification_manifest.tcl
+```
+
+任何人 clone 之后一条命令即可重建工程(自动按相对路径引用 `../rtl ../constr ../sim`,
+从 Tcl 重生成 ILA/VIO 并建好全部 OOC run;要求 Vivado 2022.1):
+
+```tcl
+vivado -mode batch -source vivado_proj/RevisionControl/Scripts/build.tcl
+```
+
+- 新工程生成在 `vivado_proj/rebuild/project_1.xpr`,与现有工程互不影响,任何 CWD 下均可运行;
+- 已在"干净克隆模拟"(仅 rtl/constr/sim/RevisionControl 的临时副本)下验证:
+  `verify_rebuild` 全 PASS(top=breathe_top、IP×2、6 个 run、XDC 原位引用、sim top=tb_debounce);
+- build.tcl 中的远程源路径已由绝对路径改为脚本相对路径(`$base_dir/../../`,
+  导出后手工修正;若将来重新导出 RevisionControl,需重做这两处修正并重新验证);
+- 与 `scripts/build.tcl`(S5 手动流程模板)的关系:该脚本是练手模板,带 TODO;
+  RevisionControl/Scripts/build.tcl 是从实际工程导出的权威可复现版本。

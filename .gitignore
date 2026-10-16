@@ -1,1 +1,10 @@
-vivado_proj
+# Vivado live project is recreatable from RevisionControl — ignore everything in
+# vivado_proj/ except the revision-control export (git cannot re-include under a
+# fully ignored parent dir, hence the /* + negation pattern)
+vivado_proj/*
+!vivado_proj/RevisionControl/
+
+# Vivado session junk at repo root
+/vivado*.jou
+/vivado*.log
+.Xil/

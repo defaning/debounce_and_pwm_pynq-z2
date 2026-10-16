@@ -27,5 +27,14 @@ module pwm_gen #(
     //   phase_c 循环 +1;
     //   pwm_r <= en_i && (phase_c < duty_i);
     //   想一想: 比较 phase_c < duty_i 用 phase_c 当前值还是下一拍? 写 TB 前先想清楚。
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            phase_c <= '0;
+            pwm_r   <= 1'b0;
+        end else begin
+            phase_c <= phase_c + 1'b1;
+            pwm_r   <= en_i && (phase_c < duty_i);
+        end
+    end
 
 endmodule
